@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+    // Check if the user is logged in (i.e., if 'userName' exists in sessionStorage)
+    if (sessionStorage.getItem('userName') === null || sessionStorage.getItem('userName') === undefined) {
+        // If user is undefined, redirect or show a message
+        window.location.href = '../login.html';  // Redirect to the login page or display a message
+    } else {
+        // Proceed with the application logic if user is defined
+        console.log('User is logged in:', sessionStorage.getItem('userName'));
+    }
+    // Check if the user is logged in
+    if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = '../index.html'; // Redirect to login page if not logged in
+    } 
+</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student ITFS</title>
+    <link rel="icon" type="image/x-icon" href="../ASSETS/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../Styles.css">
+
+</head>
+
+<body onload="fetchChildGroups(); loadTheme();">
+    <!-- Shared sidebar (see partials/sidebar.html) -->
+    <script src="../INDEX-JS/sidebar.js"></script>
+    <div id="sidebar-placeholder"></div>
+
+    <!-- Top Navigation Bar -->
+    <div class="topnav">
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search for assets, tickets, or users...">
+            <button data-emoji="✨" type="submit" class="submit">   <i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="profile" id="profile">
+            <div class="profile-icon" id="profileIcon">U</div>
+            <div class="dropdown" id="dropdown">
+                <div class="username">
+                    <h2 id="usernameDisplay"></h2>
+                </div>
+                <!-- Theme toggle switch -->
+                <div class="theme-toggle">
+                    <span>Dark Mode</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <a id="calendar" class="dropdown-item" href="../../schedule/INDEX-HTML/schedule_integration.html">Schedule <i class="fa-solid fa-calendar-days" width="20"
+                        height="20"></i></a>
+                <a href="#" onclick="logout()" class="dropdown-item">Sign Out <i class="fa-solid fa-right-from-bracket"
+                        width="20" height="20"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+        <div class="box-container-form">
+
+            <script>
+                function recordFormOpenTime() {
+                  document.getElementById('form_open_time').value = new Date().toISOString();
+                }
+
+                document.addEventListener('DOMContentLoaded', function(){
+                    recordFormOpenTime();
+                    document.getElementById('Formusername').value = sessionStorage.getItem('userName');
+                });
+              </script>
+            </head>
+         
+            
+            <form>
+                <h2>E-Waste Form</h2> 
+                <div class="decorative-line"></div>
+                <label for="Campus">Campus:</label>
+                <select id="Campus" name="Campus" required>
+                    <option value="" disabled selected>Select Campus</option>
+                    <option value="Down-City">Down-City</option>
+                    <option value="Harborside">Harborside</option>
+                </select>
+            
+                <label for="Device-Type">Device Type</label>
+                <select id="Device-Type" name="Device-Type" required>
+                    <option value="" disabled selected>Select Device Type</option>
+                    <option value="Desktop">Desktop</option>
+                    <option value="Laptop">Laptop</option>
+                    <option value="Monitor">Monitor</option>
+                    <option value="Printer">Printer</option>
+                    <option value="Television">Television</option>
+                    <option value="Projector">Projector</option>
+                    <option value="Other">Other</option>
+                </select>
+              
+                <label for="Asset-Tag">Asset tag:</label>
+                <input placeholder="00000 if none" type="text" id="Asset-Tag" name="Asset-Tag" maxlength="6" required>
+              
+                <label for="Model-Number">Model Number:</label>
+                <input placeholder="Dell AIO U2720Q..." type="text" id="Model-Number" name="Model-Number" maxlength="255" required>
+            
+                <label for="Serial_Number">Serial Number or Service Tag:</label>
+                <input placeholder="CN-0XYZ1A-12345-678-9AB" type="text" id="Serial_Number" name="Serial_Number" maxlength="255" required>
+
+                <label for="SSD_Serial">Hard Drive Serial:</label>
+                <input placeholder="EJ73N400510203E1U" type="text" id="SSD_Serial" name="SSD_Serial" maxlength="255" required>
+
+                <label for="Bin_Num">The Bin To Put The EWaste Into:</label>
+                <input type="text" id="Bin_Num" name="Bin_Num" maxlength="2" disabled required>
+            
+                <!-- Hidden input field to store form open time -->
+                <input type="hidden" id="form_open_time" name="form_open_time" value="">
+                <input type="hidden" id="Formusername" name="Formusername" value="">
+
+                <div class="decorative-line"></div>
+                <input type="submit" value="Submit">
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <script src="../INDEX-JS/Wrapper.js"></script>
+    <script src="../INDEX-JS/testindexsearch.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js'></script>
+    <script>
+
+        document.getElementById("Campus").addEventListener("change", (e) => {
+            e.preventDefault(); // stops the normal redirect
+            const campus = document.getElementById("Campus").value;
+            
+            fetch('../FORM-PHP/Ewaste_bin.php?action=check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': sessionStorage.getItem('csrfToken') || ''
+                },
+                body: `bin_campus=${campus}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('Bin_Num').value= data.bin_num;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            }); 
+        })
+
+        document.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault(); // stops the normal redirect
+            const formData = new FormData(e.target);
+            formData.append('Bin_Num', document.getElementById('Bin_Num').value);
+            console.log(formData);
+
+            fetch('../FORM-PHP/EwSubmit.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.text())
+            .then(data => {
+                window.location.href="../INDEX-HTML/main.html";
+            });
+        });
+        // Initialize jsConfetti
+        const jsConfetti = new JSConfetti();
+
+// Add click event listeners to all buttons
+document.querySelectorAll('.submit').forEach(button => {
+button.addEventListener('click', () => {
+// Retrieve the emoji from the data-emoji attribute of the clicked button
+const emoji = button.getAttribute('data-emoji');
+// Trigger the confetti with the specific emoji
+jsConfetti.addConfetti({
+emojis: [emoji], // Use the emoji as confetti
+emojiSize: 70,
+confettiNumber: 40, // Number of confetti particles
+});
+});
+});
+</script>
+
+    </script>
+    <!-- Include global.js for shared link functionality -->
+    <script src="../global.js"></script>
+
+
+</body>
+
+</html>

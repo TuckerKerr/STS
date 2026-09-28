@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Documentation</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown-dark.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<style>
+/* Hide scrollbars globally but allow scrolling */
+html, body {
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+body::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.content {
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.content::-webkit-scrollbar {
+  width: 0px;
+}
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #21262d;
+  --border-color: #30363d;
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --link-color: #58a6ff;
+  --accent-color: #238636;
+}
+
+body {
+  background-color: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  color: var(--text-primary);
+  padding: 0;
+  margin: 0;
+}
+
+body.light-mode {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --bg-tertiary: #eaeef2;
+  --border-color: #d0d7de;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --link-color: #0969da;
+  --accent-color: #1a7f37;
+}
+
+.header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  flex: 1;
+}
+
+.header-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.theme-toggle-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.search-container {
+  position: relative;
+}
+
+.search-input {
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  width: 250px;
+  font-size: 0.9rem;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--link-color);
+}
+
+.search-clear {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  display: none;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  max-height: 400px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.search-result-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+
+.search-result-item:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-title {
+  font-weight: 600;
+  color: var(--link-color);
+  margin-bottom: 0.25rem;
+}
+
+.search-result-preview {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.theme-toggle {
+  padding: 0.5rem 1rem;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.theme-toggle:hover {
+  background-color: var(--border-color);
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: auto;
+  padding: 2rem;
+}
+
+.sidebar {
+  width: 260px;
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+}
+
+.breadcrumbs {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+}
+
+.breadcrumbs a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.sidebar h2 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.doc-section {
+  margin-bottom: 1.5rem;
+}
+
+.doc-section h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.sidebar button {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.6rem 1rem;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: 0.2s;
+  position: relative;
+}
+
+.sidebar button:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.sidebar button.active {
+  background-color: var(--bg-tertiary);
+  border-color: var(--link-color);
+}
+
+.sidebar button .updated-badge {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  gap: 2rem;
+}
+
+.content-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.content {
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  margin-bottom: 1rem;
+  position: relative;
+  width: 80%;
+}
+
+.loading {
+  display: none;
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.loading.active {
+  display: block;
+}
+
+.spinner {
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--link-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.doc-metadata {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem;
+  background-color: var(--bg-tertiary);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.doc-navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.nav-button {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: 0.2s;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-button:hover {
+  background-color: var(--border-color);
+}
+
+.nav-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toc-sidebar {
+  width: 220px;
+  position: fixed;
+  top: 100px;
+  right: 10px;
+  height: fit-content;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.toc-sidebar h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc-list li {
+  margin-bottom: 0.5rem;
+}
+
+.toc-list a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  display: block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: 0.2s;
+}
+
+.toc-list a:hover {
+  color: var(--link-color);
+  background-color: var(--bg-tertiary);
+}
+
+.toc-list a.active {
+  color: var(--link-color);
+  font-weight: 600;
+}
+
+.toc-list .toc-h3 {
+  padding-left: 1rem;
+  font-size: 0.8rem;
+}
+
+a {
+  color: var(--link-color);
+}
+
+.markdown-body pre {
+  position: relative !important;
+  background-color: #0e1116 !important;
+  padding: 1rem 1rem 1rem 1rem !important;
+  border-radius: 6px !important;
+  overflow-x: auto !important;
+}
+
+body.light-mode .markdown-body pre {
+  background-color: #f6f8fa !important;
+}
+
+.markdown-body code {
+  background-color: #0b0d11 !important;
+  color: #c9d1d9 !important;
+  padding: 0.2em 0.4em !important;
+  border-radius: 4px !important;
+}
+
+body.light-mode .markdown-body code {
+  background-color: #eaeef2 !important;
+  color: #24292f !important;
+}
+
+.markdown-body .copy-btn {
+  position: absolute !important;
+  top: 0.5rem !important;
+  right: 0.5rem !important;
+  background: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  padding: 0.3rem 0.6rem !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 0.8rem !important;
+  transition: 0.2s !important;
+}
+
+.markdown-body .copy-btn:hover {
+  background: var(--border-color) !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1024px) {
+  .toc-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    padding: 1rem;
+  }
+  
+  .sidebar {
+    width: 100%;
+    position: static;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .header h1,
+  .header-controls,
+  .theme-toggle-wrapper {
+    flex: none;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .search-input {
+    width: 100%;
+  }
+  
+  .doc-metadata {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Version badge */
+.version-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background-color: var(--accent-color);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1> Documentation <span class="version-badge">v2.1</span></h1>
+  <div class="header-controls">
+    <div class="search-container">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search documentation...">
+      <button class="search-clear" id="searchClear">✕</button>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+  <div class="theme-toggle-wrapper">
+    <!-- <button class="theme-toggle" id="themeToggle">🌙 Dark</button>--> 
+  </div>
+</div>
+
+<div class="container">
+  <div class="sidebar">
+    <div class="breadcrumbs" id="breadcrumbs">
+      <a href="../INDEX-HTML/main.html">Home</a> / Introduction
+    </div>
+    <h2>Documentation</h2>
+    
+    <div class="doc-section">
+      <h3>Getting Started</h3>
+      <button onclick="loadDoc('intro.md')" data-doc="intro.md">Introduction</button>
+      <button onclick="loadDoc('setup.md')" data-doc="setup.md">Setup</button>
+      <button onclick="loadDoc('FrontEnd.md')" data-doc="FrontEnd.md">Front-End</button>
+    </div>
+    
+    <div class="doc-section">
+      <h3>Reference</h3>
+      <button onclick="loadDoc('api.md')" data-doc="api.md">API Reference</button>
+      <button onclick="loadDoc('faq.md')" data-doc="faq.md">FAQ</button>
+    </div>
+    
+    <div class="doc-section">
+      <h3>Version Control</h3>
+      <button onclick="loadDoc('GitDoc.MD')" data-doc="GitDoc.MD">Git</button>
+      <button onclick="loadDoc('GitGPG.MD')" data-doc="GitGPG.MD">GPG</button>
+    </div>
+  </div>
+  
+  <div class="main-content">
+    <div class="content-wrapper">
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Loading documentation...</p>
+      </div>
+      
+      <div id="content" class="content markdown-body">
+        <!-- Doc content will load here -->
+      </div>
+      
+      <div class="doc-navigation" id="docNavigation" style="display: none;">
+        <a href="#" class="nav-button" id="prevDoc">
+          <span>←</span>
+          <span id="prevDocText">Previous</span>
+        </a>
+        <a href="#" class="nav-button" id="nextDoc">
+          <span id="nextDocText">Next</span>
+          <span>→</span>
+        </a>
+      </div>
+    </div>
+    
+    <div class="toc-sidebar" id="tocSidebar">
+      <h3>On This Page</h3>
+      <ul class="toc-list" id="tocList"></ul>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+  const breadcrumbsEl = document.getElementById('breadcrumbs');
+  const contentEl = document.getElementById('content');
+  const loadingEl = document.getElementById('loading');
+  const searchInput = document.getElementById('searchInput');
+  const searchClear = document.getElementById('searchClear');
+  const searchResults = document.getElementById('searchResults');
+  const themeToggle = document.getElementById('themeToggle');
+  const tocList = document.getElementById('tocList');
+  const tocSidebar = document.getElementById('tocSidebar');
+  
+  // Document order for navigation
+  const docOrder = ['intro.md', 'setup.md', 'FrontEnd.md', 'api.md', 'faq.md', 'GitDoc.MD', 'GitGPG.MD'];
+  
+  // Document metadata (you can customize these)
+  const docMetadata = {
+    'intro.md': { updated: '2025-01-15', version: '1.0' },
+    'setup.md': { updated: '2025-01-20', version: '1.0' },
+    'FrontEnd.md': { updated: '2025-02-03', version: '1.0' },
+    'api.md': { updated: '2025-01-25', version: '1.0' },
+    'faq.md': { updated: '2025-01-10', version: '1.0' },
+    'GitDoc.MD': { updated: '2025-02-03', version: '1.2' },
+    'GitGPG.MD': { updated: '2025-01-22', version: '1.0' }
+  };
+  
+  const nameMap = {
+    'intro.md': 'Introduction',
+    'setup.md': 'Setup',
+    'FrontEnd.md': 'Front-End',
+    'api.md': 'API Reference',
+    'faq.md': 'FAQ',
+    'GitDoc.MD': 'Git',
+    'GitGPG.MD': 'GPG'
+  };
+  
+  let currentDoc = 'intro.md';
+  let searchIndex = [];
+  
+  // Theme toggle
+  //themeToggle.addEventListener('click', () => {
+  //  document.body.classList.toggle('light-mode');
+  //  const isLight = document.body.classList.contains('light-mode');
+  //  themeToggle.textContent = isLight ? '☀️ Light' : '🌙 Dark';
+  //  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  //});
+  
+  // Load saved theme
+  //if (localStorage.getItem('theme') === 'light') {
+  //  document.body.classList.add('light-mode');
+  //  themeToggle.textContent = '☀️ Light';
+  //}
+  
+  function updateBreadcrumb(filename) {
+    const docName = nameMap[filename] || filename;
+    breadcrumbsEl.innerHTML = `<a href="../INDEX-HTML/main.html">Home</a> / ${docName}`;
+  }
+  
+  function addCopyButtons() {
+    document.querySelectorAll('.content pre').forEach(pre => {
+      if (pre.querySelector('.copy-btn')) return;
+      
+      const button = document.createElement('button');
+      button.className = 'copy-btn';
+      button.textContent = 'Copy';
+      button.addEventListener('click', () => {
+        const code = pre.querySelector('code');
+        if (!code) return;
+        navigator.clipboard.writeText(code.innerText).then(() => {
+          button.textContent = 'Copied!';
+          setTimeout(() => button.textContent = 'Copy', 1000);
+        });
+      });
+      pre.appendChild(button);
+    });
+  }
+  
+  function generateTOC() {
+    const headings = contentEl.querySelectorAll('h1, h2, h3');
+    tocList.innerHTML = '';
+    
+    if (headings.length === 0) {
+      tocSidebar.style.display = 'none';
+      return;
+    }
+    
+    tocSidebar.style.display = 'block';
+    
+    headings.forEach((heading, index) => {
+      const id = heading.id || `heading-${index}`;
+      heading.id = id;
+      
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = `#${id}`;
+      a.textContent = heading.textContent;
+      a.className = heading.tagName === 'H3' ? 'toc-h3' : '';
+      
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        heading.scrollIntoView({ behavior: 'smooth' });
+        updateActiveTOC();
+      });
+      
+      li.appendChild(a);
+      tocList.appendChild(li);
+    });
+    
+    // Update active TOC on scroll
+    window.addEventListener('scroll', updateActiveTOC);
+  }
+  
+  function updateActiveTOC() {
+    const headings = contentEl.querySelectorAll('h1, h2, h3');
+    const tocLinks = tocList.querySelectorAll('a');
+    
+    let currentActiveIndex = 0;
+    
+    headings.forEach((heading, index) => {
+      const rect = heading.getBoundingClientRect();
+      if (rect.top <= 150) {
+        currentActiveIndex = index;
+      }
+    });
+    
+    tocLinks.forEach((link, index) => {
+      link.classList.toggle('active', index === currentActiveIndex);
+    });
+  }
+  
+  function addMetadata(filename) {
+    const metadata = docMetadata[filename];
+    if (!metadata) return '';
+    
+    const date = new Date(metadata.updated);
+    const formattedDate = date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    
+    return `
+      <div class="doc-metadata">
+        <div class="metadata-item">
+          <span></span>
+          <span>Updated: ${formattedDate}</span>
+        </div>
+        <div class="metadata-item">
+          <span></span>
+          <span>Version: ${metadata.version}</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  function updateNavigation(filename) {
+    const currentIndex = docOrder.indexOf(filename);
+    const prevDoc = currentIndex > 0 ? docOrder[currentIndex - 1] : null;
+    const nextDoc = currentIndex < docOrder.length - 1 ? docOrder[currentIndex + 1] : null;
+    
+    const navEl = document.getElementById('docNavigation');
+    const prevBtn = document.getElementById('prevDoc');
+    const nextBtn = document.getElementById('nextDoc');
+    const prevText = document.getElementById('prevDocText');
+    const nextText = document.getElementById('nextDocText');
+    
+    if (prevDoc) {
+      prevBtn.classList.remove('disabled');
+      prevBtn.onclick = () => loadDoc(prevDoc);
+      prevText.textContent = nameMap[prevDoc];
+    } else {
+      prevBtn.classList.add('disabled');
+      prevBtn.onclick = null;
+    }
+    
+    if (nextDoc) {
+      nextBtn.classList.remove('disabled');
+      nextBtn.onclick = () => loadDoc(nextDoc);
+      nextText.textContent = nameMap[nextDoc];
+    } else {
+      nextBtn.classList.add('disabled');
+      nextBtn.onclick = null;
+    }
+    
+    navEl.style.display = 'flex';
+  }
+  
+  function updateActiveButton(filename) {
+    document.querySelectorAll('.sidebar button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.doc === filename);
+    });
+  }
+  
+  function loadDoc(filename) {
+    currentDoc = filename;
+    loadingEl.classList.add('active');
+    contentEl.style.display = 'none';
+    
+    // Update hash without scrolling
+    history.pushState(null, null, `#${filename.replace('.md', '').replace('.MD', '')}`);
+    
+    fetch(filename)
+      .then(res => {
+        if (!res.ok) throw new Error('Document not found');
+        return res.text();
+      })
+      .then(md => {
+        setTimeout(() => {
+          const html = marked.parse(md);
+          contentEl.innerHTML = addMetadata(filename) + html;
+          
+          // Syntax highlighting
+          contentEl.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+          });
+          
+          addCopyButtons();
+          updateBreadcrumb(filename);
+          updateNavigation(filename);
+          updateActiveButton(filename);
+          generateTOC();
+          
+          loadingEl.classList.remove('active');
+          contentEl.style.display = 'block';
+          window.scrollTo(0, 0);
+        }, 300);
+      })
+      .catch(err => {
+        contentEl.innerHTML = '<p style="color:red;">Error loading document: ' + err + '</p>';
+        loadingEl.classList.remove('active');
+        contentEl.style.display = 'block';
+      });
+  }
+  
+  // Build search index
+  function buildSearchIndex() {
+    docOrder.forEach(filename => {
+      fetch(filename)
+        .then(res => res.text())
+        .then(text => {
+          searchIndex.push({
+            filename: filename,
+            title: nameMap[filename],
+            content: text
+          });
+        })
+        .catch(() => {});
+    });
+  }
+  
+  // Search functionality
+  searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    
+    if (query.length === 0) {
+      searchResults.style.display = 'none';
+      searchClear.style.display = 'none';
+      return;
+    }
+    
+    searchClear.style.display = 'block';
+    
+    const results = searchIndex.filter(doc => {
+      return doc.title.toLowerCase().includes(query) || 
+             doc.content.toLowerCase().includes(query);
+    });
+    
+    if (results.length === 0) {
+      searchResults.innerHTML = '<div class="search-result-item">No results found</div>';
+      searchResults.style.display = 'block';
+      return;
+    }
+    
+    searchResults.innerHTML = results.map(doc => {
+      const contentMatch = doc.content.toLowerCase().indexOf(query);
+      const preview = contentMatch >= 0 
+        ? '...' + doc.content.substring(Math.max(0, contentMatch - 50), contentMatch + 100) + '...'
+        : doc.content.substring(0, 150) + '...';
+      
+      return `
+        <div class="search-result-item" onclick="selectSearchResult('${doc.filename}')">
+          <div class="search-result-title">${doc.title}</div>
+          <div class="search-result-preview">${preview}</div>
+        </div>
+      `;
+    }).join('');
+    
+    searchResults.style.display = 'block';
+  });
+  
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    searchResults.style.display = 'none';
+    searchClear.style.display = 'none';
+  });
+  
+  // Close search results when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container')) {
+      searchResults.style.display = 'none';
+    }
+  });
+  
+  function selectSearchResult(filename) {
+    searchInput.value = '';
+    searchResults.style.display = 'none';
+    searchClear.style.display = 'none';
+    loadDoc(filename);
+  }
+  
+  // Handle deep linking
+  window.addEventListener('DOMContentLoaded', () => {
+    buildSearchIndex();
+    
+    const hash = window.location.hash.substring(1);
+    const docFile = docOrder.find(doc => doc.replace('.md', '').replace('.MD', '').toLowerCase() === hash.toLowerCase());
+    
+    if (docFile) {
+      loadDoc(docFile);
+    } else {
+      loadDoc('intro.md');
+    }
+  });
+  
+  // Handle browser back/forward
+  window.addEventListener('popstate', () => {
+    const hash = window.location.hash.substring(1);
+    const docFile = docOrder.find(doc => doc.replace('.md', '').replace('.MD', '').toLowerCase() === hash.toLowerCase());
+    
+    if (docFile) {
+      loadDoc(docFile);
+    }
+  });
+</script>
+
+</body>
+</html>

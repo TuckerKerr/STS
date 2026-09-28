@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+    // Check if the user is logged in (i.e., if 'userName' exists in sessionStorage)
+    if (sessionStorage.getItem('userName') === null || sessionStorage.getItem('userName') === undefined) {
+        // If user is undefined, redirect or show a message
+        window.location.href = '../login.html';  // Redirect to the login page or display a message
+    } else {
+        // Proceed with the application logic if user is defined
+        console.log('User is logged in:', sessionStorage.getItem('userName'));
+    }
+    // Check if the user is logged in
+    if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = '../index.html'; // Redirect to login page if not logged in
+    } 
+</script>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student ITFS</title>
+    <link rel="icon" type="image/x-icon" href="../ASSETS/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../Styles.css">
+</head>
+
+<style>
+    .box-container {
+        display: initial;
+    }
+    .category-header {
+        background-color: var(--topnav-bg)
+    }
+    .category-header h2 {
+        color: var(--text-color)
+    }
+    .category-card {
+        background: white;
+    }
+</style>
+
+<body onload="loadTheme();">
+    <!-- Shared sidebar (see partials/sidebar.html) -->
+    <script src="../INDEX-JS/sidebar.js"></script>
+    <div id="sidebar-placeholder"></div>
+
+    <!-- Top Navigation Bar -->
+    <div class="topnav">
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search for assets, tickets, or users...">
+            <button data-emoji="✨" type="submit" class="submit"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="profile" id="profile">
+            <div class="profile-icon" id="profileIcon">U</div>
+            <div class="dropdown" id="dropdown">
+                <div class="username">
+                    <h2 id="usernameDisplay"></h2>
+                </div>
+                <!-- Theme toggle switch -->
+                <div class="theme-toggle">
+                    <span>Dark Mode</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <a id="calendar" class="dropdown-item" href="../../schedule/INDEX-HTML/schedule_integration.html">Schedule <i class="fa-solid fa-calendar-days" width="20"
+                        height="20"></i></a>
+                <a href="#" onclick="logout()" class="dropdown-item">Sign Out <i class="fa-solid fa-right-from-bracket"
+                        width="20" height="20"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+        <div class="box-container">
+            
+                <div class="dashboard" id="dashboard">
+                    <!-- Dashboard content will be dynamically inserted here -->
+                </div>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <script src="../INDEX-JS/Wrapper.js"></script>
+    <script src="../INDEX-JS/expand.js"></script>
+    <script src="../INDEX-JS/testindexsearch.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js'></script>
+<script>
+                // Initialize jsConfetti
+                const jsConfetti = new JSConfetti();
+
+// Add click event listeners to all buttons
+document.querySelectorAll('.submit').forEach(button => {
+button.addEventListener('click', () => {
+// Retrieve the emoji from the data-emoji attribute of the clicked button
+const emoji = button.getAttribute('data-emoji');
+// Trigger the confetti with the specific emoji
+jsConfetti.addConfetti({
+    emojis: [emoji], // Use the emoji as confetti
+    emojiSize: 70,
+    confettiNumber: 40, // Number of confetti particles
+});
+});
+});
+</script>
+
+    <!-- Include global.js for shared link functionality -->
+    <script src="../global.js"></script>
+
+</body>
+
+</html>

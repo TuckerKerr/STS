@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<title>JWU PXE Imaging Dashboard</title>
+
+<style>
+:root{
+    --bg:#0f172a;
+    --card:#1e293b;
+    --cardHover:#334155;
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --success:#22c55e;
+    --warning:#facc15;
+    --danger:#ef4444;
+    --stuck:#fb923c;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:Segoe UI,Tahoma,sans-serif;
+}
+
+.dashboard-header{
+    position:sticky;
+    top:0;
+    z-index:1000;
+    background:#111827;
+    padding:20px;
+    box-shadow:0 2px 12px rgba(0,0,0,.3);
+}
+
+.dashboard-title{
+    font-size:2rem;
+    font-weight:bold;
+    margin-bottom:15px;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:15px;
+}
+
+.stat-card{
+    background:var(--card);
+    padding:15px;
+    border-radius:12px;
+    text-align:center;
+}
+
+.stat-number{
+    font-size:2rem;
+    font-weight:bold;
+}
+
+.stat-label{
+    color:var(--muted);
+    margin-top:5px;
+}
+
+.last-refresh{
+    margin-top:10px;
+    color:var(--muted);
+}
+
+.search-container{
+    padding:20px;
+}
+
+.search-box{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    background:var(--card);
+    color:white;
+    font-size:1rem;
+}
+
+.feed-container{
+    padding:0 20px 20px 20px;
+}
+
+.image-card{
+    background:var(--card);
+    border-radius:12px;
+    padding:18px;
+    margin-bottom:15px;
+    transition:.25s;
+}
+
+.image-card:hover{
+    background:var(--cardHover);
+}
+
+.card-header{
+    display:flex;
+    justify-content:space-between;
+    gap:15px;
+}
+
+.pc-name{
+    font-weight:bold;
+    font-size:1.2rem;
+}
+
+.status-badge{
+    padding:8px 12px;
+    border-radius:8px;
+    font-weight:bold;
+    white-space:nowrap;
+}
+
+.imaging{
+    background:var(--warning);
+    color:black;
+}
+
+.complete{
+    background:var(--success);
+}
+
+.failed{
+    background:var(--danger);
+}
+
+.stuck{
+    background:var(--stuck);
+}
+
+.card-info{
+    margin-top:10px;
+    color:var(--muted);
+}
+
+@keyframes pulse{
+    0% { opacity:.5; }
+    50% { opacity:1; }
+    100% { opacity:.5; }
+}
+
+.pulse{
+    animation:pulse 2s infinite;
+}
+
+@media (max-width:768px){
+
+    .dashboard-title{
+        font-size:1.4rem;
+    }
+
+    .stats{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .card-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .status-badge{
+        width:100%;
+        text-align:center;
+    }
+}
+
+.dropdown {
+    position: absolute;
+    top: 55px;
+    right: 0;
+    background-color: var(--card);
+    border-radius: 3px;
+    border: 1px solid invert(var(--card));
+    width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    overflow: hidden;
+    color: var(--text-color);
+    font-size: 25px;
+}
+
+.dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: background-color 0.2s;
+    font-size: 20px;
+    border: 1px solid gray;
+}
+
+.dropdown-item:hover {
+    background-color: var(#111827);
+}
+
+.dropdown-item img {
+    margin-left: 10px;
+    filter: invert(var(White));
+}
+
+.profile {
+    position: absolute;
+    margin-left: 20px;
+    display: flex;
+    flex-direction: row-reverse;
+    right: 20px;
+    top: 20px;
+    font-size: 25px;
+}
+
+.profile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--card);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.profile-icon:hover {
+    background-color: var(#111827);
+}
+
+.badge-header{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+</style>
+</head>
+
+<body>
+<div class="dashboard-header">
+
+    <span>
+        <div class="dashboard-title">
+            JWU PXE Imaging Dashboard
+            <div class="profile" id="profile">
+                <div class="profile-icon" id="profileIcon">?</div>
+                <div class="dropdown" id="dropdown">
+                    <a href="../../schedule/INDEX-HTML/schedule_integration.html" class="dropdown-item">Schedule <i class="fa-solid fa-calendar-days" width="20" height="20"></i></a>
+                    <a href="INDEX-HTML/main.html" class="dropdown-item">Sts <i class="fa-solid fa-chart-bar" width="20" height="20"></i></a>
+                </div>
+            </div> 
+        </div>
+        
+    </span>
+    
+
+    <div class="stats">
+
+        <div class="stat-card">
+            <div id="activeCount" class="stat-number">0</div>
+            <div class="stat-label">Imaging</div>
+        </div>
+
+        <div class="stat-card">
+            <div id="completeCount" class="stat-number">0</div>
+            <div class="stat-label">Completed</div>
+        </div>
+
+        <div class="stat-card">
+            <div id="failedCount" class="stat-number">0</div>
+            <div class="stat-label">Failed</div>
+        </div>
+
+        <div class="stat-card">
+            <div id="stuckCount" class="stat-number">0</div>
+            <div class="stat-label">Stuck</div>
+        </div>
+
+        <div class="stat-card">
+            <div id="avgDuration" class="stat-number">--</div>
+            <div class="stat-label">Avg Duration</div>
+        </div>
+
+    </div>
+
+    <div id="lastRefresh" class="last-refresh">
+        Last Refresh: Never
+    </div>
+
+</div>
+
+<div class="search-container">
+
+    <input
+        type="text"
+        id="searchBox"
+        class="search-box"
+        placeholder="Search by Computer Name..."
+        onkeyup="renderData()">
+
+</div>
+
+<div id="feedContainer" class="feed-container"></div>
+
+<script>
+const profileIcon = document.getElementById('profileIcon');
+const dropdown = document.getElementById('dropdown');
+let dashboardData = [];
+
+function formatDuration(minutes){
+
+    if(minutes == null)
+        return "Unknown";
+
+    let hours = Math.floor(minutes / 60);
+    let mins = minutes % 60;
+
+    if(hours > 0)
+        return `${hours}h ${mins}m`;
+
+    return `${mins}m`;
+}
+
+function renderData(){
+
+    const search =
+        document.getElementById("searchBox")
+        .value
+        .toLowerCase();
+
+    const feed =
+        document.getElementById("feedContainer");
+
+    feed.innerHTML = "";
+
+    dashboardData
+        .filter(item =>
+            item.PCNAME &&
+            item.PCNAME.toLowerCase().includes(search))
+        .forEach(item => {
+
+            let cssClass = "";
+            let statusText = item.STATUS;
+            let style = "none";
+
+            if(item.IS_STUCK){
+
+                cssClass = "stuck pulse";
+                statusText = "Possibly Stuck";
+                style = "hidden";
+            }
+            else{
+
+                switch(item.STATUS){
+
+                    case "In Progress":
+                        cssClass = "imaging pulse";
+                        statusText = "Imaging";
+                        break;
+
+                    case "Complete":
+                        cssClass = "complete";
+                        statusText = "Completed";
+                        break;
+
+                    case "Failed":
+                        cssClass = "failed";
+                        statusText = "Failed";
+                        break;
+                }
+            }
+
+            feed.innerHTML += `
+                <div class="image-card">
+
+                    <div class="card-header">
+
+                        <div class="pc-name">
+                            ${item.PCNAME}
+                        </div>
+
+                        <div id="badge-header" class="badge-header">
+                            <div class="status-badge ${cssClass}">
+                                ${statusText}
+                            </div>
+                            
+                            <div id="remove-card" style="display: ${style}; cursor: pointer;" class="status-badge ${cssClass}" onclick="removeCard('${item.PCNAME}')">
+                                Remove Entry
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-info">
+                        Started: ${item.START_TIME || "Unknown"}
+                    </div>
+
+                    <div class="card-info">
+                        Completed: ${item.END_TIME || "Still Running"}
+                    </div>
+
+                    <div class="card-info">
+                        Duration: ${formatDuration(item.DURATION_MINUTES)}
+                    </div>
+
+                </div>
+            `;
+        });
+}
+
+async function removeCard(PCNAME) {
+    try{
+        console.log("button clicked to remove, ", PCNAME);
+        fetch('get_pxe_dashboard.php?action=remove', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': sessionStorage.getItem('csrfToken') || ''
+                },
+                body: `pcname=${PCNAME}`
+            })
+            console.log("REMOVED");
+            loadDashboard();
+    }
+    catch(ex){
+
+        console.error(
+            "Dashboard Load Error:",
+            ex
+        );
+    }
+}
+
+async function loadDashboard(){
+
+    try{
+
+        const response =
+            await fetch('get_pxe_dashboard.php?action=load');
+
+        dashboardData =
+            await response.json();
+
+        console.log("Dashboard Data:", dashboardData);
+
+        dashboardData.sort((a,b)=>{
+
+            if(a.IS_STUCK && !b.IS_STUCK)
+                return -1;
+
+            if(!a.IS_STUCK && b.IS_STUCK)
+                return 1;
+
+            if(a.STATUS === "In Progress" &&
+               b.STATUS !== "In Progress")
+                return -1;
+
+            if(a.STATUS !== "In Progress" &&
+               b.STATUS === "In Progress")
+                return 1;
+
+            return new Date(b.START_TIME) -
+                   new Date(a.START_TIME);
+        });
+
+        let active = 0;
+        let complete = 0;
+        let failed = 0;
+        let stuck = 0;
+
+        let durations = [];
+
+        dashboardData.forEach(item => {
+
+            if(item.IS_STUCK){
+
+                stuck++;
+            }
+            else if(item.STATUS === "In Progress"){
+
+                active++;
+            }
+            else if(item.STATUS === "Complete"){
+
+                complete++;
+
+                if(item.DURATION_MINUTES != null){
+                    durations.push(
+                        item.DURATION_MINUTES
+                    );
+                }
+            }
+            else if(item.STATUS === "Failed"){
+
+                failed++;
+            }
+        });
+
+        let avg = 0;
+
+        if(durations.length > 0){
+
+            avg =
+                durations.reduce(
+                    (a,b)=>a+b,
+                    0
+                ) / durations.length;
+        }
+
+        document.getElementById("activeCount").innerText =
+            active;
+
+        document.getElementById("completeCount").innerText =
+            complete;
+
+        document.getElementById("failedCount").innerText =
+            failed;
+
+        document.getElementById("stuckCount").innerText =
+            stuck;
+
+        document.getElementById("avgDuration").innerText =
+            formatDuration(Math.round(avg));
+
+        document.getElementById("lastRefresh").innerText =
+            "Last Refresh: " +
+            new Date().toLocaleString();
+
+        renderData();
+    }
+    catch(ex){
+
+        console.error(
+            "Dashboard Load Error:",
+            ex
+        );
+    }
+}
+
+loadDashboard();
+
+setInterval(
+    loadDashboard,
+    300000
+);
+
+profileIcon.addEventListener('click', function (e) {
+    e.stopPropagation();
+    dropdown.classList.toggle('show');
+});
+
+// Close dropdown when clicking elsewhere
+document.addEventListener('click', function (e) {
+    if (!profileIcon.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('show');
+    }
+});
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+    // Check if the user is logged in (i.e., if 'userName' exists in sessionStorage)
+    if (sessionStorage.getItem('userName') === null || sessionStorage.getItem('userName') === undefined) {
+        // If user is undefined, redirect or show a message
+        window.location.href = '../login.html';  // Redirect to the login page or display a message
+    } else {
+        // Proceed with the application logic if user is defined
+        console.log('User is logged in:', sessionStorage.getItem('userName'));
+        username = sessionStorage.getItem('userName');
+    }
+    // Check if the user is logged in
+    if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+        window.location.href = '../index.html'; // Redirect to login page if not logged in
+    } 
+
+    if(sessionStorage.getItem('is_staff') !== 'true'){
+        window.location.href = 'main.html';
+    }
+
+    let idleTime = 0;
+    let refreshTime = 0;
+    let idleLimit = 10 * 60 * 1000;
+
+    const resetIdleTimer = () =>{
+        idleTimer = 0;
+    };
+
+    const trackIdleTime = () => {
+        idleTime += 1000;
+        if(idleTime >= idleLimit){
+            logout();
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', async function(){
+        AnnouncementLoader();
+        checkDate();
+        binSelection();
+        await checkBin();
+    });
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student IT Field Services</title>
+    <link rel="icon" type="image/x-icon" href="../ASSETS/favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../Styles.css">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<style>
+    .box-container {
+        flex-direction: initial;
+        align-items: initial;
+        height: 100%;
+    }
+
+    /* Styles for larger screens - keep search bar visible */
+    @media (min-width: 769px) {
+        .phone-decorative-line {
+            display: none;
+            /* Ensure search bar is visible on larger screens */
+        }
+    }
+
+    /* Mobile-Specific Styles */
+    @media (max-width: 768px) {
+        .overlay {
+            position: fixed;
+            opacity: 70%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #333;
+            z-index: 999;
+        }
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
+    .sidebar {
+        position: fixed;
+        top: 0;
+        height: 100%;
+        transition: left 0.3s ease;
+        z-index: 1000;
+        overflow-y: hidden;
+    }
+
+    .sidebar.open {
+        left: 0;
+    }
+
+    .topnav {
+        left: 60px;
+        width: calc(100% - 60px);
+    }
+
+
+    .main-content {
+        margin-top: 60px;
+        width: calc(100% - 60px);
+    }
+
+    .box-left-column,
+    .box-right-column,
+    .box-center-column {
+        width: 100%;
+    }
+
+    /* Responsive chart and box adjustments */
+    .box,
+    .chart-container {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /* Ensure chart containers are responsive */
+    canvas {
+        max-height: 300px;
+        width: auto !important;
+    }
+    #requestFeedCarousel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.carousel-card {
+  box-sizing: border-box;
+  padding: 15px;
+
+  border-radius: 3px;
+  border: 1px solid var(--border-color);
+  opacity: 0;
+  transform: scale(0.97);
+  transition: all 0.5s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+}
+
+.carousel-card.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+
+  .difficulty-rating {
+    color: #f5b301;
+    font-size: 1.1rem;
+  }
+  .btn {
+    padding: 6px 14px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 3px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+
+  .btn.deny-btn {
+    background-color: #dc3545;
+  }
+
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+</style>
+
+<body onload="fetchChildGroups(); loadTheme();">
+    <!-- Shared sidebar (see partials/sidebar.html) -->
+    <script src="../INDEX-JS/sidebar.js"></script>
+    <div id="sidebar-placeholder"></div>
+
+    <!-- Top Navigation Bar -->
+    <div class="topnav">
+
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search for assets, tickets, or users...">
+            <button data-emoji="✨" type="submit" class="submit"> <i class="fa-solid fa-magnifying-glass"></i></button>
+        </div>
+        <div class="profile" id="profile">
+            <div class="profile-icon" id="profileIcon">U</div>
+            <div class="dropdown" id="dropdown">
+                <div class="username">
+                    <h2 id="usernameDisplay"></h2>
+                </div>
+                <!-- Theme toggle switch -->
+                <div class="theme-toggle">
+                    <span>Dark Mode</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <!--
+                <div class="theme-toggle">
+                    <input type="submit" class="submit" id="webhookButton">  
+                </div>
+                -->
+                <a href="../../schedule/INDEX-HTML/schedule_integration.html" class="dropdown-item">Schedule <i class="fa-solid fa-calendar-days" width="20" height="20"></i></a>
+                <a href="#" onclick="logout()" class="dropdown-item">Sign Out <i class="fa-solid fa-right-from-bracket" width="20" height="20"></i></a>
+                <a href="#" onclick="addUser()" class="dropdown-item">A/M User <i class="fa-solid fa-user" width="20" height="20"></i></a>
+            </div>
+        </div>
+    </div>
+
+<!-- Main Content Area -->
+<div class="main-content" id="mainContent">
+    <div class="box-container">
+        <div class="box-left-column">
+            <div class="box top-box">
+                <div class="box-header">
+                    <h2>Weekly Recap</h2>
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="box-content">
+                    <canvas id="weeklyRecapChart" width="200" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="box bottom-box-top" style="max-height: 200px;">
+                <div class="box-header" style="margin: 0; padding: 0;">
+                    <h2>End of Semester</h2>
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="box-content">
+                    <form id="semesterForm">
+                        <input type="date" id="endOfSemester" name="endOfSemester">
+                        <input type="submit" id="semesterButton" value="submit">
+                        <input type="button" class="submitButton" id="semesterUpdate" value="update" disabled>
+                    </form>
+                </div>      
+            </div>
+            
+            <!--THIS WILL BE CHANGED TO A DROPDOWN FOR -->
+            <div class="box bottom-box-bottom">
+                <div class="box-header" style="margin: 0; padding: 0;">
+                    <h2>EWaste Bins</h2>
+                    <select id="campusSelect" style="margin-left: 15px;">
+                        <option value="Harborside">Harborside</option>
+                        <option value="Down-City">Downcity</option>
+                    </select>
+
+                    <button onclick="printBins(event, document.getElementById('campusSelect').value)" id="print" class="submitButton" style="margin-left: 8px; margin-right: 15px; margin-top: 5px; margin-bottom: 5px;">Print Pages</button>
+                    <i class="fas fa-recycle"></i>
+                </div>
+                <div class="box-content">
+                    <form id="binForm">
+                            <select id="bin_num" name="bin_num">
+                                
+                            </select> 
+
+                            <input type="date" id="bin_start" name="bin_start">
+                        
+                        <input type="submit" id="binButton" value="submit">
+                        <input type="button" class="submitButton" id="binUpdate" value="update" disabled style="display: none;">
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="box-center-column">
+            <div class="box full-height-box">
+                <div class="box-header">
+                    <h2>Daily Tasks</h2>
+                    <i class="fas fa-user-chart"></i>
+                </div>
+                <div class="box-row">
+                    <div class="box-section">
+                        <div class="section-header">Printer's Checked Today</div>
+                        <div class="section-content">
+                            <canvas id="PrinterCheck"></canvas>
+                        </div>
+                    </div>
+                    <div class="box-section">
+                        <div class="section-header">Rooms Checked This Week</div> 
+                        <div class="section-content">
+                            <canvas id="roomChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="box-right-column">
+            <div class="box full-height-box">
+                <div class="box-header">
+                    <h2>Announcements</h2>
+                    <i class="fas fa-user-chart"></i>
+                </div>
+                <div class="box-row">
+                    <div class="box-section" id="chat-container" style="height: 55vh;">
+                       
+                    </div>
+                    <div class="box-section">
+                        <form id="announcementForm">
+                            <input type="text" placeholder="Enter Subject Line" name="announcementSubject">
+                            <textarea type="text" style="height: 100px;" placeholder="Enter your announcement" name="announcementText"></textarea>
+                            <input type="submit" value="Post">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup" id="userPopup">
+            <div class="popup-content-input">
+                <div class="box-header">
+                    <h2>User Information</h2>
+                    <button class="close-popup" onclick="closeUser()"><i class="fa-solid fa-xmark"></i></button>
+
+                </div>
+                
+                <select id="usersType" onchange="changeUsers()">
+                    <option value="" disabled selected>Select what user you want to deal with</option>
+                    <option value="newUser">New User</option>
+                    <option value="existingUser">Modify Existing User</option>
+                </select> 
+
+                <form id="userForm" style="max-width: 100%;">
+                    <input type="radio" id="newUser" name="submitType" value="newUser" hidden checked>
+                    <input type="radio" id="oldUser" name="submitType" value="oldUser" hidden>
+
+
+                    <!--Selecting/Deciding the user-->
+                    <input type="text" placeholder="Users Name" id="usersName" name="usersName">
+                    <select id="existingUsers" name="existingUsers" style="display: none;">
+                        <option value="" disabled selected>Select User</option>
+                    </select>  
+
+                    <!--What campus the user is on-->
+                    <div style="display: flex; justify-content: space-evenly; align-items: stretch;">
+                        <span style="display: flex; align-items: baseline;">
+                            <input type="radio" id="downcityCampus" name="campusRadio" value="Downcity">
+                            <label for="downcityCampus"> Downcity</label>
+                        </span>
+                        
+                        <span style="display: flex; align-items: baseline;">
+                            <input type="radio" id="harborsideCampus" name="campusRadio" value="Harborside">
+                            <label for="harborsideCampus"> Harborside</label>
+                        </span>
+                    </div>
+                    
+
+                    <!--If the user is staff or student-->
+                    <span style="display: flex; justify-content: space-evenly; margin: 10px;">
+                        <input type="checkbox" id="staffAccount" name="accountRadio" value="Student">
+                        <label for="staffAccount">Staff</label>
+                    
+                    <!--Whether the user is active or not-->
+                        <input type="checkbox" id="activeUser" name="activeRadio" value="0">
+                        <label for="activeUser">Active</label>
+                    </span>
+
+                    <!--Maybe make all of these switches instead of radio buttons?-->
+
+                    <input type="submit" value="Submit">
+                    <input type="button" id="resetPasswordButton" value="Reset Password" style="display: none;">
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+
+
+    function fetchExistingUsers(){
+        fetch('../INDEX-PHP/getExistingUsers.php',{
+            })
+        .then(response => response.text())
+        .then(data =>{
+            document.getElementById("existingUsers").innerHTML = data;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+
+    function createPieChart(ctx, label, data) {
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Checked', 'Not Checked'],
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: ['rgba(54, 162, 235, 0.5)', 'rgba(255, 99, 132, 0.5)'],
+                    borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 99, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+    
+    async function fetchLineGraphData() {
+    try {
+        const response = await fetch('../INDEX-PHP/TicketGraph.php'); // Update the path to your PHP script
+        const data = await response.json();
+
+        if (!data || !data.labels || !data.datasets) {
+            console.error("Invalid data format:", data);
+            return;
+        }
+
+        const ctx = document.getElementById("weeklyRecapChart").getContext("2d");
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: data.labels,
+                datasets: data.datasets
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Last 7 Days"
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Total Work Done"
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Fetch error:", error);
+    }
+}
+
+fetchLineGraphData();
+
+
+    async function fetchChartData() {
+    try {
+        const response = await fetch('../INDEX-PHP/percentDone.php'); // Replace with actual PHP script path
+        const data = await response.json();
+        
+        console.log("Fetched Data:", data); // Debugging output
+        
+        if (!data || !data.labels || !data.values) {
+            console.error("Invalid data format:", data);
+            return;
+        }
+
+        // Render the chart
+        const ctx = document.getElementById("PrinterCheck").getContext("2d");
+        new Chart(ctx, {
+            type: "pie",
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.values,
+                    backgroundColor: ["rgba(54, 162, 235, 0.6)", "rgba(255, 99, 132, 0.6)"],
+                    borderColor: "#fff",
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+    } catch (error) {
+        console.error("Fetch error:", error);
+    }
+}
+
+fetchChartData();
+
+async function fetchRoomData() {
+    try {
+        const response = await fetch('../INDEX-PHP/roomChart.php'); // Update with actual path
+        const data = await response.json();
+
+        console.log("Fetched Data:", data); // Debugging output
+
+        if (!data || !data.labels || !data.values) {
+            console.error("Invalid data format:", data);
+            return;
+        }
+
+        const ctx = document.getElementById("roomChart").getContext("2d");
+        new Chart(ctx, {
+            type: "pie",
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    data: data.values,
+                    backgroundColor: ["rgba(75, 192, 192, 0.6)", "rgba(255, 159, 64, 0.6)"],
+                    borderColor: "#fff",
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+
+    } catch (error) {
+        console.error("Fetch error:", error);
+    }
+}
+
+fetchRoomData();
+
+</script>
+    
+
+
+    <!-- Footer -->
+
+    <script src="../INDEX-JS/Wrapper.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/js-confetti@latest/dist/js-confetti.browser.js'></script>
+    <script>
+        const feedContainer = document.getElementById('requestFeedCarousel');
+        let currentIndex = 0;
+        let requests = [];
+        const announcementForms = document.getElementById("announcementForm");
+        const userPopup = document.getElementById('userPopup');
+        const userForms = document.getElementById("userForm");
+        const semesterForm = document.getElementById("semesterForm");
+        const semUpdateButton = document.getElementById('semesterUpdate');
+        const binForm = document.getElementById("binForm");
+        const binUpdateButton = document.getElementById('binUpdate');
+
+        
+
+        // Escape untrusted text before inserting it into innerHTML
+        function escapeHtml(value) {
+          const div = document.createElement('div');
+          div.textContent = value ?? '';
+          return div.innerHTML;
+        }
+
+        //Create the field work submission card
+        function createCardHTML(request) {
+          return `
+            <div class="carousel-card show" id="card-${request.id}">
+              <h3>Ticket: ${escapeHtml(request.ticket)}</h3>
+              <p><strong>Submitted by:</strong> ${escapeHtml(request.name)}</p>
+              <p><strong>Work Description:</strong> ${escapeHtml(request.description)}</p>
+              <p><strong>Difficulty:</strong> <span class="difficulty-rating">${'★'.repeat(request.difficulty)}</span></p>
+              <p><strong>Time:</strong> ${escapeHtml(request.time)}</p>
+              <div class="action-buttons" style="margin-top: 10px;">
+                <button class="btn approve-btn" onclick="updateStatus(${request.id}, 'approved')">Approve</button>
+                <button class="btn deny-btn" onclick="updateStatus(${request.id}, 'denied')">Deny</button>
+              </div>
+            </div>
+          `;
+        }
+        
+        function showCurrentCard() {
+          if (requests.length === 0 || currentIndex >= requests.length) {
+            feedContainer.innerHTML = '<div class="carousel-card show">No pending requests</div>';
+            return;
+          }
+          feedContainer.innerHTML = createCardHTML(requests[currentIndex]);
+        }
+      
+        function updateStatus(id, status) {
+          const card = document.getElementById(`card-${id}`);
+          const approveBtn = card.querySelector('.approve-btn');
+          const denyBtn = card.querySelector('.deny-btn');
+      
+          // Disable buttons
+          approveBtn.disabled = true;
+          denyBtn.disabled = true;
+      
+          fetch('../INDEX-PHP/update_status.php', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'X-CSRF-Token': sessionStorage.getItem('csrfToken') || ''
+            },
+            body: `id=${id}&status=${status}`
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              card.classList.remove('show');
+              setTimeout(() => {
+                currentIndex++;
+                showCurrentCard();
+              }, 600); // Match transition duration
+            } else {
+              alert('Failed to update status');
+              approveBtn.disabled = false;
+              denyBtn.disabled = false;
+            }
+          })
+          .catch(() => {
+            alert('Request failed');
+            approveBtn.disabled = false;
+            denyBtn.disabled = false;
+          });
+        }
+      
+        fetch('../INDEX-PHP/admin.php')
+          .then(res => res.json())
+          .then(data => {
+            requests = data;
+            showCurrentCard();
+          });
+
+        //Create the announcements load into the announcement box
+        function AnnouncementLoader(){
+            fetch(`../INDEX-PHP/AcView.php?view=announcement`)
+                .then(response=> response.json())
+                .then(result=> {
+                    if(result.success && Array.isArray(result.data)){
+                    const container = document.getElementById('chat-container');
+
+                    result.data.forEach(msg => {
+                        const bubble = document.createElement('div');
+                        bubble.className = 'bubble.user';
+                        bubble.dataset.text = msg.text;
+                        bubble.dataset.timeCreated = msg.time_created;
+
+                        bubble.innerHTML = `
+                            <div class="subject">${escapeHtml(msg.subject)}<span class="time" style="justify-content: flex-end;">${escapeHtml(msg.time_created)} &nbsp;&nbsp;&nbsp; <a style="cursor: pointer;" type="submit" data-action="delete">
+                            <i class="fa-solid fa-square-minus"></i></a></span></div>
+                            <div class="message">${escapeHtml(msg.text)}</div>
+
+                            <div class="time"><span style="display: flex; justify-content: flex-start;" id="likes${msg.id}"> <a data-role="thumbsUp" style="cursor: pointer;" data-action="like"><i class="fa-solid fa-thumbs-up"></i></a>&nbsp;&nbsp;&nbsp; Liked:  ${escapeHtml(msg.likes)}</span></div>
+
+                            <div class="time"><span style="display: flex; justify-content: flex-start;" id="dislikes${msg.id}"> <a data-role="thumbsDown" style="cursor: pointer;" data-action="dislike"><i class="fa-solid fa-thumbs-down"></i></a>&nbsp;&nbsp;&nbsp;Disliked:  ${escapeHtml(msg.dislikes)}</span></div>
+                            <br>
+                        `;
+
+                        bubble.querySelector('[data-action="delete"]').addEventListener('click', () => {
+                            deleteAnnouncement(msg.text, msg.time_created);
+                        });
+                        bubble.querySelector('[data-action="like"]').addEventListener('click', function(){
+                            messageInteraction('thumbsUp', msg.text);
+                        });
+                        bubble.querySelector('[data-action="dislike"]').addEventListener('click', function(){
+                            messageInteraction('thumbsDown', msg.text);
+                        });
+
+                        container.appendChild(bubble);
+                    });
+                }
+            })
+                .catch(error => {
+                console.error('Error loading announcements:', error);
+            });
+        }
+        
+        function messageInteraction(action, text){
+            const formData = new FormData();
+            formData.append('action', action);
+            formData.append('text', text);
+
+           fetch('../INDEX-PHP/AcInteraction.php', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': sessionStorage.getItem('csrfToken') || '' },
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('chat-container').innerHTML='';
+                        AnnouncementLoader();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+        }
+
+
+        function deleteAnnouncement(text, time){
+            const formData = new FormData();
+            formData.append('time', time);
+            formData.append('text', text);
+
+            fetch('../INDEX-PHP/AcDelete.php', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': sessionStorage.getItem('csrfToken') || '' },
+                body: formData
+            })
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('chat-container').innerHTML='';
+                    AnnouncementLoader();
+                    announcementForms.reset();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+            
+        //submit an announcement
+        announcementForms.addEventListener('submit',function(event){
+            event.preventDefault();
+
+            const formData = new FormData(announcementForms);
+            console.log(formData);
+
+            fetch('../INDEX-PHP/AcSubmit.php', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': sessionStorage.getItem('csrfToken') || '' },
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('chat-container').innerHTML='';
+                        AnnouncementLoader();
+                        announcementForms.reset();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    }); 
+            });
+
+        
+        userForms.addEventListener('submit',function(event){
+            event.preventDefault();
+
+            const formData = new FormData(userForms);
+            const Dataform = Object.fromEntries(formData.entries());
+            console.log(Dataform);
+            
+            fetch('../INDEX-PHP/usersForm.php', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': sessionStorage.getItem('csrfToken') || '' },
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        //clear all data from the form
+                        closeUser();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    }); 
+            });
+
+        document.getElementById("existingUsers").addEventListener('change', function(event) {
+            document.querySelectorAll('input[name="campusRadio"]').forEach(radio => radio.checked = false);
+            document.getElementById("activeUser").checked = false;
+            document.getElementById("staffAccount").checked = false;
+
+            const user = document.getElementById("existingUsers");
+            const userIndex = user.options[user.selectedIndex];
+            const userCampus = userIndex.dataset.campus;
+            const userActive = userIndex.dataset.active;
+
+            console.log(userIndex, userCampus, userActive);
+            if(userActive === '1'){
+                document.getElementById("activeUser").checked = true;
+            }
+            if(userCampus === "Staff"){
+                document.getElementById("staffAccount").checked = true;
+                document.getElementById("downcityCampus").checked = true;
+            }
+            else{
+                console.log((userCampus.toLowerCase() + "Campus"))
+                document.getElementById(userCampus.toLowerCase() + "Campus").checked = true;
+            }
+
+        });
+            
+
+        document.getElementById('staffAccount').addEventListener('click', () => {
+            if(document.getElementById('staffAccount').value === "Staff"){
+                document.getElementById('staffAccount').value = "Student";
+            }
+            else if(document.getElementById('staffAccount').value === "Student"){
+                document.getElementById('staffAccount').value = "Staff";
+               
+            }
+             console.log(document.getElementById('staffAccount').value);
+        });
+
+        document.getElementById('activeUser').addEventListener('click', () => {
+            if(document.getElementById('activeUser').value === "1"){
+                document.getElementById('activeUser').value = "0";
+            }
+            else if(document.getElementById('activeUser').value === "0"){
+                document.getElementById('activeUser').value = "1";
+               
+            }
+             console.log(document.getElementById('activeUser').value);
+        });
+
+        function addUser(){
+            userPopup.style.display = "flex";
+            userPopup.body.style.add('overflow: hidden;');
+        }
+
+        function closeUser(){
+            userPopup.style.display = "none";
+            userPopup.body.style.remove('overflow: hidden;');
+
+            document.getElementById('existingUsers').style.display = "none";
+            document.getElementById('existingUsers').value = "";
+            document.getElementById("usersType").value = "";
+            document.getElementById('usersName').value = "";
+            document.getElementById('usersName').style.display = "block";
+            document.querySelectorAll('input[name="campusRadio"]').forEach(radio => radio.checked = false);
+            document.getElementById("activeUser").checked = false;
+            document.getElementById("staffAccount").checked = false;
+            document.getElementById('newUser').checked = true;
+            document.getElementById('oldUser').checked = false;
+        }
+        
+
+        function changeUsers(){
+            const usersType = document.getElementById("usersType");
+            if(usersType.value === "newUser"){
+                document.getElementById('existingUsers').style.display = "none";
+                document.getElementById('existingUsers').value = "";
+                document.getElementById('usersName').style.display = "block";
+                document.getElementById('resetPasswordButton').style.display = "none";
+                document.querySelectorAll('input[name="campusRadio"]').forEach(radio => radio.checked = false);
+                document.querySelectorAll('input[name="accountRadio"]').forEach(radio => radio.checked = false);
+                document.querySelectorAll('input[name="activeRadio"]').forEach(radio => radio.checked = false);
+                document.getElementById('newUser').checked = true;
+                document.getElementById('oldUser').checked = false;
+            }
+            if(usersType.value === "existingUser"){
+                document.getElementById('usersName').style.display = "none";
+                document.getElementById('usersName').value = "";
+                document.getElementById('existingUsers').style.display = "block";
+                document.getElementById('resetPasswordButton').style.display = "inline-block";
+                document.querySelectorAll('input[name="campusRadio"]').forEach(radio => radio.checked = false);
+                document.querySelectorAll('input[name="accountRadio"]').forEach(radio => radio.checked = false);
+                document.querySelectorAll('input[name="activeRadio"]').forEach(radio => radio.checked = false);
+                document.getElementById('oldUser').checked = true;
+                document.getElementById('newUser').checked = false;
+                fetchExistingUsers();
+            }
+        }
+
+        document.getElementById('resetPasswordButton').addEventListener('click', function(){
+            const usersName = document.getElementById('existingUsers').value;
+            if(!usersName){
+                alert('Select a user first.');
+                return;
+            }
+            if(!confirm(`Generate a temporary password for ${usersName}?`)){
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('submitType', 'resetPassword');
+            formData.append('existingUsers', usersName);
+
+            fetch('../INDEX-PHP/usersForm.php', {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': sessionStorage.getItem('csrfToken') || '' },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Temporary password for ${usersName}: ${data.tempPassword}\n\nShare this with the user directly. They will be required to change it on next login.`);
+                    } else {
+                        alert(data.message || 'Failed to reset password.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Request failed.');
+                });
+        });
+        
+
+        //Form to be submitted that determines the last of the semester
+        semesterForm.addEventListener('submit', function(event){
+            event.preventDefault();
+
+            const formData = new FormData(semesterForm);
+            const date = (formData.get('endOfSemester'));
+
+            fetch('../FORM-PHP/semDateSubmit.php?action=submit', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': sessionStorage.getItem('csrfToken') || '' },
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        document.getElementById('endOfSemester').value= date;
+                        document.getElementById('endOfSemester').disabled = true;
+                        document.getElementById('semesterButton').style.display = "none";
+                        document.getElementById('semesterUpdate').style.display = "";
+                        document.getElementById('semesterUpdate').disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    }); 
+            });
+
+        semUpdateButton.addEventListener('click', function(event){
+            event.preventDefault();
+
+            console.log("Button Pressed");
+            document.getElementById('endOfSemester').disabled = false;
+            document.getElementById('semesterUpdate').disabled = true;
+            document.getElementById('semesterButton').style.display = "";
+            document.getElementById('semesterUpdate').style.display = "none";
+        });
+
+        async function checkDate(){
+            const response = await fetch('../FORM-PHP/semDateSubmit.php?action=check'); // Update the path to your PHP script
+            const data = await response.json();
+    
+            if(data){
+                document.getElementById('endOfSemester').value= data.errormessage;
+                document.getElementById('endOfSemester').disabled = true;
+                document.getElementById('semesterButton').style.display = "none";
+                document.getElementById('semesterUpdate').style.display = "";     
+                document.getElementById('semesterUpdate').disabled = false;
+            }
+        }
+
+        //Form to be submitted that determines the last of the semester
+        binForm.addEventListener('submit', async function(event){
+            event.preventDefault();
+            const campus = document.getElementById("campusSelect").value;
+            const formData = new FormData(binForm);
+            formData.append('campus', campus);
+
+
+            fetch('../FORM-PHP/Ewaste_bin.php?action=submit', {
+                    method: 'POST',
+                    headers: { 'X-CSRF-Token': sessionStorage.getItem('csrfToken') || '' },
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(data => {
+                        checkBin();
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    }); 
+            });
+
+        binUpdateButton.addEventListener('click', function(event){
+            event.preventDefault();
+
+            console.log("Button Pressed");
+            document.getElementById('bin_num').disabled = false;
+            document.getElementById('bin_start').disabled = false;
+            document.getElementById('binButton').disabled = false;
+            document.getElementById('binButton').style.display = "";
+            document.getElementById('binUpdate').style.display = "none";
+            document.getElementById('campusSelect').disabled = true;
+        });
+
+        document.getElementById("campusSelect").addEventListener('change', async function(event){
+            event.preventDefault();
+            await binSelection();
+            await checkBin();
+        });
+
+        //add a change check for the actual bin switches then call to the db for the date
+        document.getElementById("bin_num").addEventListener('change', async function(event) {
+            event.preventDefault();
+            await checkBinDate();
+        })
+
+        async function checkBinDate(){
+            const bin = document.getElementById("bin_num").value;
+            await fetch('../FORM-PHP/Ewaste_bin.php?action=getDate', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': sessionStorage.getItem('csrfToken') || ''
+                    },
+                    body: `bin_id=${bin}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('bin_start').value= data.errormessage;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    }); 
+        }
+
+        async function checkBin(){
+            const campus = document.getElementById("campusSelect").value;
+            console.log(campus);
+            await fetch('../FORM-PHP/Ewaste_bin.php?action=check', {
+                    method: 'POST',
+                    headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-Token': sessionStorage.getItem('csrfToken') || ''
+                    },
+                    body: `bin_campus=${campus}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('bin_num').value= data.bin_num;
+                        document.getElementById('bin_num').disabled = true;
+                        document.getElementById('bin_start').value= data.errormessage;
+                        document.getElementById('bin_start').disabled = true;
+                        document.getElementById('binButton').style.display = "none";
+                        document.getElementById('binUpdate').style.display = "";     
+                        document.getElementById('binUpdate').disabled = false;
+                        document.getElementById('campusSelect').disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    }); 
+        }
+
+    async function printBins(event, campus) {
+    if (event) event.preventDefault();
+        try {
+            const response = await fetch(`../INDEX-PHP/printBins.php?action=check&campus=${campus}`);
+            if (!response.ok) throw new Error('Network response was not ok ' + response.statusText);
+
+            let dataJSON = await response.json();
+            console.log(dataJSON);
+
+            // Filter to the selected campus
+            if (campus) {
+                dataJSON = dataJSON.filter(item =>
+                    (item.campus ?? '').toLowerCase() === campus.toLowerCase()
+                );
+            }
+
+            if (!Array.isArray(dataJSON) || dataJSON.length === 0) {
+                alert(`No data to print for ${campus ?? 'selected campus'}.`);
+                return;
+            }
+
+            const escapeHtml = (str) =>
+                String(str ?? '').replace(/[&<>"']/g, (c) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[c]));
+
+            // Group rows by bin (within the already-filtered campus)
+            const binsMap = new Map();
+            dataJSON.forEach(item => {
+                if (!binsMap.has(item.bin)) binsMap.set(item.bin, []);
+                binsMap.get(item.bin).push(item);
+            });
+
+            // Build one page-section per bin
+            const pagesHtml = Array.from(binsMap.entries()).map(([binName, items]) => {
+                const rowsHtml = items.map(element => `
+                    <tr>
+                        <td>${escapeHtml(element.asset)}</td>
+                        <td>${escapeHtml(element.device)}</td>
+                        <td>${escapeHtml(element.model)}</td>
+                        <td>${escapeHtml(element.tag)}</td>
+                    </tr>
+                `).join('');
+
+                return `
+                    <section class="bin-page">
+                        <h1>${escapeHtml(campus ?? '')} &mdash; Bin: ${escapeHtml(binName)}</h1>
+                        <table>
+                            <thead>
+                                <tr><th>Asset Tag</th><th>Device</th><th>Model</th><th>Tag</th></tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                        <div class="page-footer">
+                        <p>By signing below, I confirm that I have looked at the items in this bin and can assure that all are present.</p>
+                        <span class="sig-blank">Signature: _____________________________________</span>
+                        <span class="sig-label">Date: ____/____/____</span>
+                    </div>
+                    </section>
+                `;
+            }).join('');
+
+            const printWindow = window.open('', '', 'width=800,height=600');
+
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Print Bins - ${escapeHtml(campus ?? '')}</title>
+                    <style>
+                        @page { margin: 20px 20px 90px 20px; } /* extra bottom margin so content clears the footer */
+                        body { font-family: Arial, sans-serif; font-size: 14px; }
+                        h1 { font-size: 18px; text-align: center; margin-bottom: 12px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+                        th { background: #f0f0f0; }
+
+                        .bin-page {
+                            page-break-after: auto;
+                            break-after: page;
+                        }
+
+                        /* Repeats on every printed page */
+                        .page-footer {
+                            position: fixed;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            border-top: 1px solid #333;
+                            padding-top: 8px;
+                            font-size: 11px;
+                        }
+                        .page-footer p {
+                            margin: 0 0 10px 0;
+                            font-style: italic;
+                        }
+                        .sig-blank {
+                            margin-top: 4px;
+                            font-size: .95em;
+                        }
+                        .sig-label {
+                            margin-left: 20px;
+                            font-size: .95em;
+                        }
+
+                        #confirmBar { margin-top: 20px; text-align: center; }
+                        #confirmBar button { font-size: 14px; padding: 8px 16px; margin: 0 6px; cursor: pointer; }
+                        @media print { #confirmBar { display: none; } }
+                    </style>
+                </head>
+                <body>
+                    ${pagesHtml}
+                </body>
+                </html>
+            `);
+
+            printWindow.document.close();
+                printWindow.onload = function () {
+                printWindow.focus();
+                printWindow.print();
+            };
+
+            printWindow.onafterprint = function () {
+                setTimeout(function () {
+                    printWindow.close();
+                }, 1000);
+            };
+
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        }
+    }
+
+    async function binSelection(){
+        const campus = document.getElementById("campusSelect").value;
+        await fetch('../FORM-PHP/Ewaste_bin.php?action=select',{
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-Token': sessionStorage.getItem('csrfToken') || ''
+                },
+            body: `bin_campus=${campus}`
+        })
+            .then(response => response.text())
+            .then(data =>{
+                document.getElementById("bin_num").innerHTML = data;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+
+        //End of semester code
+
+        let refreshTables = 5 * 60 * 1000;
+
+        const trackRefreshTime = () => {
+            refreshTime += 1000;
+            if(refreshTime >= refreshTables){
+            showCurrentCard();
+            }
+        };
+
+      </script>
+</body>
+</html>
